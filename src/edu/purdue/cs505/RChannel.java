@@ -12,9 +12,18 @@ public class RChannel implements ReliableChannel {
 	private DatagramSocket udpChannel;
 	private ReceiverThread rThread;
 	private SenderThread sThread;
+	private int sendSeq;
 
 	protected ArrayList<Message> sendBuffer;
 	protected ArrayList<Message> receiveBuffer;
+
+	protected static int bufferLength = 4;
+
+	RChannel() {
+		sendBuffer = new MessageClass[RChannel.bufferLength * 100];
+		receiveBuffer = new MessageClass[RChannel.bufferLength];
+		ackIndex = sendIndex = endIndex = sendSeq = 0;
+	}
 
 	public void init(String destinationIP, int dPort, int lPort) {
 		//try {
@@ -89,6 +98,4 @@ public class RChannel implements ReliableChannel {
 	public void setLocalPort(int localPort) {
 		this.localPort = localPort;
 	}
-
-	
 }
