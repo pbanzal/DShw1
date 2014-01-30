@@ -1,75 +1,73 @@
 package edu.purdue.cs505;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
+import java.util.Iterator;
 
-class SenderThread extends Thread
-{
-	private RChannel rChannel;
-	private ArrayList<Message> outQ;
+class SenderThread extends Thread {
+  private RChannel rChannel;
 
-	SenderThread(RChannel rChannel)
-	{
-		this.rChannel = rChannel;
-		this.outQ = rChannel.sendBuffer;
-	}
+  SenderThread(RChannel rChannel) {
+    this.rChannel = rChannel;
+  }
 
-	/*
-	 * Implements the sender thread
-	 */
-	public void run()
-	{
-		try
-		{
-			Thread.sleep(1000); // Let recvrs start listening.
-			while (true)
-			{
-				synchronized (outQ)
-				{
-					if (!outQ.isEmpty())
-					{
-						String outMessage = outQ.remove(0).getMessageContents();
-						byte[] buf = outMessage.getBytes();
-						DatagramPacket out = new DatagramPacket(buf,
-								buf.length, InetAddress.getByName("localhost"), // TODO
-																				// replace
-																				// with
-																				// hostadd
-								rChannel.getDestinationPort());
-						DatagramSocket s = new DatagramSocket();
-						Debugger.print(1, "Sending" + outMessage);
-						s.send(out);
-					}
-				}
-			}
+  /*
+   * Implements the sender thread
+   */
+  public void run() {
+    try {
+      while (true) {
+        Thread.sleep(100);
+        synchronized (rChannel.sendBuffer) {
+          if (!rChannel.sendBuffer.isEmpty()) {
+            Iterator<Message> itr = rChannel.sendBuffer.iterator();
+            while (itr.hasNext()) {
+              Message m = itr.next();
+              if (m.isAckD()) {
+                itr.remove();
+              } else {
+                break;
+              }
+            }
 
-		} catch (UnknownHostException e)
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SocketException e)
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e)
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InterruptedException e)
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
+            itr = rChannel.sendBuffer.iterator();
+            for (int sendCount = 0; sendCount < RChannel.bufferLength
+                && itr.hasNext(); sendCount++) {
+              ByteArrayOutputStream baos = new ByteArrayOutputStream();
+              ObjectOutputStream oos = new ObjectOutputStream(baos);
+              Message m = itr.next();
+              oos.writeObject(m);
 
-	public void putMsg(Message m)
-	{
-		outQ.add(m);
-	}
+              byte[] buf = baos.toByteArray();
+              DatagramPacket out = new DatagramPacket(buf, buf.length,
+                  InetAddress.getByName("localhost"),
+                  rChannel.getDestinationPort());
+              Debugger.print(1, "UDP Send " + m.toString());
+              rChannel.getUdpChannel().send(out);
+            }
+          } else {
+            Debugger.print(1, "Nothing to send");
+          }
+        }
+      }
+    } catch (UnknownHostException e) {
+      e.printStackTrace();
+    } catch (SocketException e) {
+      e.printStackTrace();
+    } catch (IOException e) {
+      e.printStackTrace();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+  }
+
+  public void putMsg(Message m) {
+    rChannel.sendBuffer.add(m);
+  }
 
 }

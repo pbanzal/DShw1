@@ -3,93 +3,121 @@ package edu.purdue.cs505;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
-import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class RChannel implements ReliableChannel {
-	private String destinationIP;
-	private int destinationPort;
-	private int localPort;
-	private DatagramSocket udpChannel;
-	private ReceiverThread rThread;
-	private SenderThread sThread;
-	private int sendSeq;
+  protected static int bufferLength = 4;
+  protected static int stringLength = 50000;
 
-	protected ArrayList<Message> sendBuffer;
-	protected ArrayList<Message> receiveBuffer;
+  protected LinkedBlockingQueue<Message> sendBuffer;
+  protected ArrayList<Message> receiveBuffer;
 
-	protected static int bufferLength = 4;
+  private String destinationIP;
+  private int destinationPort;
+  private int localPort;
+  private short sendSeqNo;
+  private ReceiverThread rThread;
+  private SenderThread sThread;
+  private DatagramSocket udpChannel;
 
-	public void init(String destinationIP, int dPort, int lPort) {
-		//try {
-			sendBuffer = new ArrayList();
-			receiveBuffer = new ArrayList();
-			destinationPort = dPort;
-			localPort = lPort;
-			
-			//udpChannel = new DatagramSocket(lPort);
-			Debugger.print(1, "RChannel started at port: " + lPort);
-			rThread = new ReceiverThread(this);
-			sThread = new SenderThread(this);
+  /*
+   * Initilaize the channel. Creates a socket and starts the sender and receiver
+   * thread.
+   */
+  public void init(String destinationIP, int dPort, int lPort) {
+    try {
+      sendBuffer = new LinkedBlockingQueue();
+      receiveBuffer = new ArrayList();
+      destinationPort = dPort;
+      localPort = lPort;
 
-			rThread.start();
-			sThread.start();
-		//} catch (SocketException e) {
-			//System.out.println("Cannot init Reliable channel because: " + e.getMessage());
-		//} 
-	}
+      udpChannel = new DatagramSocket(lPort);
+      Debugger.print(1, "RChannel started at port: " + lPort);
 
-	/*
-	 * Implement it
-	 */
-	public  void  rsend(Message m){
-		synchronized(sendBuffer)
-		{
-		Debugger.print(1, "Adding to Send Buffer"+m.getMessageContents());
-		sendBuffer.add(m); //Take care of synchronization
-	
-		}
-	}
+      rThread = new ReceiverThread(this);
+      sThread = new SenderThread(this);
 
-	/*
-	 * Implement it
-	 */
-	public void rlisten(IReliableChannelReceiver rc) {
-		
-		synchronized(receiveBuffer)
-		{
-			if(!receiveBuffer.isEmpty())
-				rc.rreceive(receiveBuffer.remove(0));
-		}
-	}
-	/*
-	 * Implement it
-	 */
-	public void halt() {
-		rThread.stop();
-		sThread.stop();
-	}
+      rThread.start();
+      sThread.start();
+    } catch (SocketException e) {
+      System.out.println("Cannot init Reliable channel because: "
+          + e.getMessage());
+    }
+  }
 
-	public String getDestinationIP() {
-		return destinationIP;
-	}
+  /*
+   * The method breaks the incoming message such that message Content is not
+   * more than 65,507 bytes. To be on the safe side, underlying string cannot
+   * contain more than 50,000 bytes
+   */
+  public void rsend(Message m) {
+    synchronized (sendBuffer) {
+      String stringToSend = m.getMessageContents();
+      while (stringToSend.length() > stringLength) {
+        Message msgToSend = new Message(stringToSend.substring(0, stringLength));
+        if (!send(msgToSend)) {
+          continue;
+        }
+        stringToSend = stringToSend.substring(stringLength);
+      }
+      send(new Message(stringToSend));
+    }
+  }
 
-	public void setDestinationIP(String destinationIP) {
-		this.destinationIP = destinationIP;
-	}
+  /*
+   * Implement it
+   */
+  public void rlisten(IReliableChannelReceiver rc) {
+    if (!receiveBuffer.isEmpty())
+      rc.rreceive(receiveBuffer.remove(0));
+  }
 
-	public int getDestinationPort() {
-		return destinationPort;
-	}
+  /*
+   * Implement it
+   */
+  public void halt() {
+    rThread.stop();
+    sThread.stop();
+  }
 
-	public void setDestinationPort(int destinationPort) {
-		this.destinationPort = destinationPort;
-	}
+  public String getDestinationIP() {
+    return destinationIP;
+  }
 
-	public int getLocalPort() {
-		return localPort;
-	}
+  public int getDestinationPort() {
+    return destinationPort;
+  }
 
-	public void setLocalPort(int localPort) {
-		this.localPort = localPort;
-	}
+  public int getLocalPort() {
+    return localPort;
+  }
+
+  public DatagramSocket getUdpChannel() {
+    return udpChannel;
+  }
+
+  private void incSeq() {
+    this.sendSeqNo = (short) ((this.sendSeqNo + 1) % Short.MAX_VALUE);
+  }
+
+  /*
+   * Puts the message in the buffer so that sender thread can send the message
+   * If message is successfully put, returns true else false
+   */
+  private boolean send(Message msgToSend) {
+    msgToSend.setAck(false);
+    msgToSend.setSeqNo(this.sendSeqNo);
+    incSeq();
+    try {
+      synchronized (sendBuffer) {
+        sendBuffer.put(msgToSend);
+      }
+    } catch (InterruptedException e) {
+      Debugger.print(1, e.getMessage());
+      return false;
+    }
+    Debugger.print(1, "Adding to Send Buffer " + msgToSend.toString());
+    return true;
+  }
+
 }
