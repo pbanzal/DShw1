@@ -19,12 +19,6 @@ public class RChannel implements ReliableChannel {
 
 	protected static int bufferLength = 4;
 
-	RChannel() {
-		sendBuffer = new MessageClass[RChannel.bufferLength * 100];
-		receiveBuffer = new MessageClass[RChannel.bufferLength];
-		ackIndex = sendIndex = endIndex = sendSeq = 0;
-	}
-
 	public void init(String destinationIP, int dPort, int lPort) {
 		//try {
 			sendBuffer = new ArrayList();
