@@ -2,6 +2,8 @@ package edu.purdue.cs505;
 
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.Queue;
 
 public class RChannel implements ReliableChannel {
 	private String destinationIP;
@@ -11,37 +13,51 @@ public class RChannel implements ReliableChannel {
 	private ReceiverThread rThread;
 	private SenderThread sThread;
 
-	protected Message[] sendBuffer;
-	protected Message[] receiveBuffer;
+	protected ArrayList<Message> sendBuffer;
+	protected ArrayList<Message> receiveBuffer;
 
 	public void init(String destinationIP, int dPort, int lPort) {
-		try {
-			udpChannel = new DatagramSocket(lPort);
+		//try {
+			sendBuffer = new ArrayList();
+			receiveBuffer = new ArrayList();
+			destinationPort = dPort;
+			localPort = lPort;
+			
+			//udpChannel = new DatagramSocket(lPort);
 			Debugger.print(1, "RChannel started at port: " + lPort);
-			rThread = new ReceiverThread(udpChannel);
-			sThread = new SenderThread(udpChannel);
+			rThread = new ReceiverThread(this);
+			sThread = new SenderThread(this);
 
 			rThread.start();
 			sThread.start();
-		} catch (SocketException e) {
-			System.out.println("Cannot init Reliable channel because: " + e.getMessage());
-		} 
+		//} catch (SocketException e) {
+			//System.out.println("Cannot init Reliable channel because: " + e.getMessage());
+		//} 
 	}
 
 	/*
 	 * Implement it
 	 */
-	public void rsend(Message m){
+	public  void  rsend(Message m){
+		synchronized(sendBuffer)
+		{
+		Debugger.print(1, "Adding to Send Buffer"+m.getMessageContents());
+		sendBuffer.add(m); //Take care of synchronization
 	
+		}
 	}
 
 	/*
 	 * Implement it
 	 */
-	public void rlisten(ReliableChannelReceiver rc) {
-	
+	public void rlisten(IReliableChannelReceiver rc) {
+		
+		synchronized(receiveBuffer)
+		{
+			if(!receiveBuffer.isEmpty())
+				rc.rreceive(receiveBuffer.remove(0));
+		}
 	}
-
 	/*
 	 * Implement it
 	 */
@@ -49,4 +65,30 @@ public class RChannel implements ReliableChannel {
 		rThread.stop();
 		sThread.stop();
 	}
+
+	public String getDestinationIP() {
+		return destinationIP;
+	}
+
+	public void setDestinationIP(String destinationIP) {
+		this.destinationIP = destinationIP;
+	}
+
+	public int getDestinationPort() {
+		return destinationPort;
+	}
+
+	public void setDestinationPort(int destinationPort) {
+		this.destinationPort = destinationPort;
+	}
+
+	public int getLocalPort() {
+		return localPort;
+	}
+
+	public void setLocalPort(int localPort) {
+		this.localPort = localPort;
+	}
+
+	
 }
