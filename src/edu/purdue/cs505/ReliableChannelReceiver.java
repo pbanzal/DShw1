@@ -1,6 +1,6 @@
-package edu.purdue.cs505;
+package edu.purdue.cs505;
 
-public interface ReliableChannelReceiver {
-	void rreceive(Message m);
+public interface ReliableChannelReceiver {
+	void rreceive(Message m);
 }
 
