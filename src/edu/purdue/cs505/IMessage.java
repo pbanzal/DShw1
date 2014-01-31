@@ -1,8 +1,7 @@
 package edu.purdue.cs505;
 
-public interface IMessage
-{
-	String getMessageContents();
+public interface IMessage {
+  String getMessageContents();
 
-	void setMessageContents(String contents);
+  void setMessageContents(String contents);
 }
