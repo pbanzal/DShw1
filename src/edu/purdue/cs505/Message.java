@@ -2,7 +2,7 @@ package edu.purdue.cs505;
 
 import java.io.Serializable;
 
-public class Message implements IMessage, Serializable {
+public class Message implements IMessage, Serializable, Comparable<Message> {
 
   private String msgContents;
   private boolean isAck;
@@ -53,5 +53,9 @@ public class Message implements IMessage, Serializable {
   public String toString() {
     return ("SeqNo: " + seqNo + " " + msgContents + " isAck: " + isAck
         + " AckD: " + ackD);
+  }
+
+  public int compareTo(Message obj) {
+    return Double.compare(this.seqNo, obj.getSeqNo());
   }
 }

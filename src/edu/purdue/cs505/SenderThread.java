@@ -51,7 +51,7 @@ class SenderThread extends Thread {
               rChannel.getUdpChannel().send(out);
             }
           } else {
-            // Debugger.print(1, "Nothing to send");
+            Debugger.print(1, "Nothing to send");
           }
         }
       }

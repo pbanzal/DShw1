@@ -2,10 +2,8 @@ package edu.purdue.cs505;
 
 import java.net.DatagramSocket;
 import java.net.SocketException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.PriorityQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class RChannel implements ReliableChannel {
   protected static int bufferLength = 4;
@@ -31,12 +29,8 @@ public class RChannel implements ReliableChannel {
   public void init(String destinationIP, int dPort, int lPort) {
     try {
       sendBuffer = new LinkedBlockingQueue();
-      receiveBuffer = new PriorityQueue<Message>(50000,new Comparator<Message>() {
-        @Override
-        public int compare(Message msg1, Message msg2) {
-          return Double.compare(msg1.getSeqNo(), msg2.getSeqNo());
-        }
-      });
+
+      receiveBuffer = new PriorityQueue<Message>();
       destinationPort = dPort;
       localPort = lPort;
 
