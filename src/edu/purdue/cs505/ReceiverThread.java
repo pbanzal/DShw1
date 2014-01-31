@@ -7,78 +7,206 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 
-class ReceiverThread extends Thread {
-  private RChannel rChannel;
+class ReceiverThread extends Thread
+{
+	private RChannel rChannel;
 
-  ReceiverThread(RChannel rChannel) {
-    this.rChannel = rChannel;
-  }
+	ReceiverThread(RChannel rChannel)
+	{
+		this.rChannel = rChannel;
+	}
 
-  /*
-   * Implements the receiver thread
-   */
-  public void run() {
-    byte[] buf = new byte[66000];
-    DatagramPacket dgp = new DatagramPacket(buf, buf.length);
+	/*
+	 * Implements the receiver thread
+	 */
+	public void run()
+	{
+		byte[] buf = new byte[66000];
+		DatagramPacket dgp = new DatagramPacket(buf, buf.length);
+		
+		/* Set timeout on receive to periodically flush the receiveBuffer
+		*  & thereby invoke the listener callback.
+		*/
+		try
+		{
+			rChannel.getUdpChannel().setSoTimeout(5000);
+		}
+		catch (SocketException e1)
+		{
+			e1.printStackTrace();
+		}
+		
+		while (true)
+		{
+			try
+			{
+				StopWatch timer = new StopWatch();
+				timer.start();
+				// Assume 1sec is good enough to receive #<bufferLength> frames.
+				while (timer.getElapsedTime() < 1000)
+				{
+					rChannel.getUdpChannel().receive(dgp);
+					ByteArrayInputStream bais = new ByteArrayInputStream(
+							dgp.getData());
+					ObjectInputStream ois = new ObjectInputStream(bais);
+					Message msgReceived = (Message) ois.readObject();
 
-    try {
-      while (true) {
-        rChannel.getUdpChannel().receive(dgp);
-        ByteArrayInputStream bais = new ByteArrayInputStream(dgp.getData());
-        ObjectInputStream ois = new ObjectInputStream(bais);
-        Message msgReceived = (Message) ois.readObject();
+					if (msgReceived.isAck())
+					{
+						Debugger.print(1,
+								"Ack Recvd: " + msgReceived.toString()
+										+ ", from address: " + dgp.getAddress()
+										+ ", port: " + dgp.getPort());
 
-        if (msgReceived.isAck()) {
-          Debugger.print(
-              1,
-              "Ack Recvd: " + msgReceived.toString() + ", from address: "
-                  + dgp.getAddress() + ", port: " + dgp.getPort());
+						synchronized (rChannel.sendBuffer)
+						{
+							if (!rChannel.sendBuffer.isEmpty())
+							{
+								Iterator<Message> itr = rChannel.sendBuffer
+										.iterator();
+								Debugger.print(1, "Iterating for setting ackD");
+								for (int sendCount = 0; sendCount < RChannel.bufferLength
+										&& itr.hasNext(); sendCount++)
+								{
+									Message m = itr.next();
+									Debugger.print(1, m.toString());
+									if (m.getSeqNo() == msgReceived.getSeqNo())
+									{
+										m.setAckD(true);
+										Debugger.print(1,
+												"Found and ackD saved");
+										break;
+									}
+								}
+							}
+						}
+					} 
+					// Not Ack
+					else
+					{
+						int msgSeqNum = msgReceived.getSeqNo();
 
-          synchronized (rChannel.sendBuffer) {
-            if (!rChannel.sendBuffer.isEmpty()) {
-              Iterator<Message> itr = rChannel.sendBuffer.iterator();
-              Debugger.print(1, "Iterating for setting ackD");
-              for (int sendCount = 0; sendCount < RChannel.bufferLength
-                  && itr.hasNext(); sendCount++) {
-                Message m = itr.next();
-                Debugger.print(1, m.toString());
-                if (m.getSeqNo() == msgReceived.getSeqNo()) {
-                  m.setAckD(true);
-                  Debugger.print(1, "Found and ackD saved");
-                  break;
-                }
-              }
-            }
-          }
-        } else {
-          synchronized (rChannel.receiveBuffer) {
-            rChannel.receiveBuffer.add(msgReceived);
-          }
-          Debugger.print(
-              1,
-              "Msg Recvd: " + msgReceived.toString() + ", from address: "
-                  + dgp.getAddress() + ", port: " + dgp.getPort());
+						// Frame is as expected, within receiver window size limits.
+						if (rChannel.getRecvSeqNo() <= msgSeqNum
+								&& msgSeqNum <= rChannel.getRecvSeqNo()
+										+ RChannel.bufferLength)
+						{
+							synchronized (rChannel.receiveBuffer)
+							{
+								rChannel.receiveBuffer.add(msgReceived);
+							}
 
-          // Sending back the Ack
-          ByteArrayOutputStream baos = new ByteArrayOutputStream();
-          ObjectOutputStream oos = new ObjectOutputStream(baos);
-          msgReceived.setAck(true);
-          oos.writeObject(msgReceived);
-          buf = baos.toByteArray();
-          DatagramPacket out = new DatagramPacket(buf, buf.length,
-              dgp.getAddress(), dgp.getPort());
-          Debugger.print(1, "Sending Ack for: " + msgReceived.toString());
-          rChannel.getUdpChannel().send(out);
-        }
-      }
-    } catch (SocketException e) {
-      e.printStackTrace();
-    } catch (IOException e) {
-      e.printStackTrace();
-    } catch (ClassNotFoundException e) {
-      e.printStackTrace();
-    }
-  }
+							Debugger.print(
+									1,
+									"Msg Recvd: " + msgReceived.toString()
+											+ ", from address: "
+											+ dgp.getAddress() + ", port: "
+											+ dgp.getPort());
+
+							// Sending back the Ack
+							ByteArrayOutputStream baos = new ByteArrayOutputStream();
+							ObjectOutputStream oos = new ObjectOutputStream(
+									baos);
+							msgReceived.setAck(true);
+							oos.writeObject(msgReceived);
+							buf = baos.toByteArray();
+							DatagramPacket out = new DatagramPacket(buf,
+									buf.length, dgp.getAddress(), dgp.getPort());
+							Debugger.print(
+									1,
+									"Sending Ack for: "
+											+ msgReceived.toString());
+							rChannel.getUdpChannel().send(out);
+						}
+
+						// Missing ACK - Frame is already received, so just send ack.
+						else if (msgSeqNum < rChannel.getRecvSeqNo())
+						{
+							// Sending back the Ack
+							ByteArrayOutputStream baos = new ByteArrayOutputStream();
+							ObjectOutputStream oos = new ObjectOutputStream(
+									baos);
+							msgReceived.setAck(true);
+							oos.writeObject(msgReceived);
+							buf = baos.toByteArray();
+							DatagramPacket out = new DatagramPacket(buf,
+									buf.length, dgp.getAddress(), dgp.getPort());
+							Debugger.print(
+									1,
+									"Sending Ack for: "
+											+ msgReceived.toString());
+							rChannel.getUdpChannel().send(out);
+						} 
+						else
+						{
+							// Ignore frames whose seqNum > upper bound of
+							// window.
+						}
+					}
+				}
+				// Timer Expired.
+				timer.stop();
+				invokeCallBack();
+			} 
+			catch (SocketTimeoutException e)
+			{
+				invokeCallBack();
+			} 
+			catch (SocketException e)
+			{
+				e.printStackTrace();
+			} 
+			catch (IOException e)
+			{
+				e.printStackTrace();
+			} 
+			catch (ClassNotFoundException e)
+			{
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	/*
+	 * Sorts the received packets in FIFO order and invokes callback for each message.
+	 */
+	public void invokeCallBack()
+	{
+		if (!rChannel.receiveBuffer.isEmpty())
+		{
+			// Sort the received packets in order.
+			Collections.sort(rChannel.receiveBuffer, new Comparator<Message>()
+			{
+				@Override
+				public int compare(Message msg1, Message msg2)
+				{
+					return Double.compare(msg1.getSeqNo(), msg2.getSeqNo());
+				}
+			});
+
+			// Invoke callback till successive messages are sequential.
+			Iterator<Message> itr = rChannel.receiveBuffer.iterator();
+			short expected = rChannel.getRecvSeqNo();
+			while (itr.hasNext())
+			{
+				Message msg = itr.next();
+				if (expected == msg.getSeqNo())
+				{
+					expected++;
+					itr.remove();
+					rChannel.reliableChannelReceiver.rreceive(msg);
+				} 
+				else
+				{
+					rChannel.setRecvSeqNo(expected);
+					break;
+				}
+			}
+		}
+	}
 }
