@@ -3,14 +3,16 @@ package edu.purdue.cs505;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.PriorityQueue;
 
 public class RChannel implements ReliableChannel {
   protected static int bufferLength = 4;
   protected static int stringLength = 50000;
 
   protected LinkedBlockingQueue<Message> sendBuffer;
-  protected ArrayList<Message> receiveBuffer;
+  protected PriorityQueue<Message> receiveBuffer;
 
   private String destinationIP;
   private int destinationPort;
@@ -29,7 +31,12 @@ public class RChannel implements ReliableChannel {
   public void init(String destinationIP, int dPort, int lPort) {
     try {
       sendBuffer = new LinkedBlockingQueue();
-      receiveBuffer = new ArrayList();
+      receiveBuffer = new PriorityQueue<Message>(50000,new Comparator<Message>() {
+        @Override
+        public int compare(Message msg1, Message msg2) {
+          return Double.compare(msg1.getSeqNo(), msg2.getSeqNo());
+        }
+      });
       destinationPort = dPort;
       localPort = lPort;
 
@@ -111,7 +118,7 @@ public class RChannel implements ReliableChannel {
     this.sendSeqNo = (short) ((this.sendSeqNo + 1) % Short.MAX_VALUE);
   }
 
-  private void incRecvSeq() {
+  public void incRecvSeq() {
     this.recvSeqNo = (short) ((this.recvSeqNo + 1) % Short.MAX_VALUE);
   }
 

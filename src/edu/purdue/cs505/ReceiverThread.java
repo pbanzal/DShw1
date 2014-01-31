@@ -8,8 +8,6 @@ import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 
 class ReceiverThread extends Thread {
@@ -31,17 +29,13 @@ class ReceiverThread extends Thread {
      * invoke the listener callback.
      */
     try {
-      rChannel.getUdpChannel().setSoTimeout(5000);
+      rChannel.getUdpChannel().setSoTimeout(1000);
     } catch (SocketException e1) {
       e1.printStackTrace();
     }
 
     while (true) {
       try {
-        StopWatch timer = new StopWatch();
-        timer.start();
-        // Assume 1sec is good enough to receive #<bufferLength> frames.
-        while (timer.getElapsedTime() < 1000) {
           rChannel.getUdpChannel().receive(dgp);
           ByteArrayInputStream bais = new ByteArrayInputStream(dgp.getData());
           ObjectInputStream ois = new ObjectInputStream(bais);
@@ -113,9 +107,6 @@ class ReceiverThread extends Thread {
               // window.
             }
           }
-        }
-        // Timer Expired.
-        timer.stop();
         invokeCallBack();
       } catch (SocketTimeoutException e) {
         invokeCallBack();
@@ -135,14 +126,6 @@ class ReceiverThread extends Thread {
    */
   public void invokeCallBack() {
     if (!rChannel.receiveBuffer.isEmpty()) {
-      // Sort the received packets in order.
-      Collections.sort(rChannel.receiveBuffer, new Comparator<Message>() {
-        @Override
-        public int compare(Message msg1, Message msg2) {
-          return Double.compare(msg1.getSeqNo(), msg2.getSeqNo());
-        }
-      });
-
       // Invoke callback till successive messages are sequential.
       Iterator<Message> itr = rChannel.receiveBuffer.iterator();
       short expected = rChannel.getRecvSeqNo();
@@ -150,6 +133,7 @@ class ReceiverThread extends Thread {
         Message msg = itr.next();
         if (expected == msg.getSeqNo()) {
           expected++;
+          rChannel.incRecvSeq();
           itr.remove();
           rChannel.reliableChannelReceiver.rreceive(msg);
         } else {
