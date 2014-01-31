@@ -6,26 +6,23 @@ public class Main {
 
     ReliableChannelReceiver rcr = new ReliableChannelReceiver();
 
-    RChannel rc1 = new RChannel(); // At A
-    rc1.init("localhost", 5000, 4000);
-    rc1.rlisten(rcr);
+    RChannel senderTest = new RChannel(); // Sender
+    senderTest.init("localhost", 5000, 4000);
 
-    RChannel rc2 = new RChannel(); // At B
-    rc2.init("localhost", 4000, 5000);
-    rc2.rlisten(rcr);
+    RChannel receiverTest = new RChannel(); // Receiver
+    receiverTest.init("localhost", 4000, 5000);
+    receiverTest.rlisten(rcr);
 
-    rc1.rsend(new Message("AToBMsg1"));
-    rc1.rsend(new Message("AToBMsg2"));
+    test1(senderTest, receiverTest);
+  }
 
-    rc2.rsend(new Message("BToAMsg3"));
-    rc2.rsend(new Message("BToAMsg4"));
-
-    try {
-      Thread.sleep(3000);
-    } catch (InterruptedException e) {
-      e.printStackTrace();
+  private static void test1(RChannel sender, RChannel receiver) {
+    int num = 0;
+    while (num < 100001) {
+      Message m = new Message(new Integer(num).toString());
+      sender.rsend(m);
+      num++;
     }
-    rc1.halt();
-    rc2.halt();
+    Debugger.print(2, "done!");
   }
 }

@@ -21,6 +21,7 @@ class ReceiverThread extends Thread {
    * Implements the receiver thread
    */
   public void run() {
+    int ackFailCount = 0;
     byte[] buf = new byte[66000];
     DatagramPacket dgp = new DatagramPacket(buf, buf.length);
 
@@ -29,7 +30,7 @@ class ReceiverThread extends Thread {
      * invoke the listener callback.
      */
     try {
-      rChannel.getUdpChannel().setSoTimeout(1000);
+      rChannel.getUdpChannel().setSoTimeout(100);
     } catch (SocketException e1) {
       e1.printStackTrace();
     }
@@ -69,7 +70,7 @@ class ReceiverThread extends Thread {
           int msgSeqNum = msgReceived.getSeqNo();
           // Frame is as expected, within receiver window size limits.
           if (rChannel.getRecvSeqNo() <= msgSeqNum
-              && msgSeqNum <= rChannel.getRecvSeqNo() + RChannel.bufferLength) {
+              && msgSeqNum < rChannel.getRecvSeqNo() + RChannel.bufferLength) {
             synchronized (rChannel.receiveBuffer) {
               rChannel.receiveBuffer.add(msgReceived);
             }
@@ -82,7 +83,13 @@ class ReceiverThread extends Thread {
           // Missing ACK - Frame is already received, so just send ack.
           else if (msgSeqNum < rChannel.getRecvSeqNo()) {
             sendACK(msgReceived, dgp);
+            ackFailCount++;
+            if (ackFailCount % 100 == 0)
+              Debugger.print(2, "ACK fail Count " + ackFailCount);
           } else {
+            Debugger.print(2, "Gadbad msgSeqNum: " + msgSeqNum + " MaxSeqNum: "
+                + ((rChannel.getRecvSeqNo() + RChannel.bufferLength)));
+            Debugger.print(2, " " + ackFailCount);
             // Ignore frames whose seqNum > upper bound of
             // window.
           }
@@ -135,8 +142,10 @@ class ReceiverThread extends Thread {
         if (expected == msg.getSeqNo()) {
           expected++;
           rChannel.incRecvSeq();
-          itr.remove();
-          rChannel.reliableChannelReceiver.rreceive(msg);
+          if (rChannel.reliableChannelReceiver != null) {
+            itr.remove();
+            rChannel.reliableChannelReceiver.rreceive(msg);
+          }
         } else {
           rChannel.setRecvSeqNo(expected);
           break;

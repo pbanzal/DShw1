@@ -6,7 +6,7 @@ import java.util.PriorityQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class RChannel implements ReliableChannel {
-  protected static int bufferLength = 4;
+  protected static int bufferLength = 32;
   protected static int stringLength = 50000;
 
   protected LinkedBlockingQueue<Message> sendBuffer;
@@ -21,6 +21,11 @@ public class RChannel implements ReliableChannel {
   private SenderThread sThread;
   private DatagramSocket udpChannel;
   public ReliableChannelReceiver reliableChannelReceiver;
+
+  public void init(String destinationIP, int dPort) {
+    init(destinationIP, dPort, dPort);
+    return;
+  }
 
   /*
    * Initilaize the channel. Creates a socket and starts the sender and receiver

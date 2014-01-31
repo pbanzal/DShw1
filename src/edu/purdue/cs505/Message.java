@@ -14,6 +14,10 @@ public class Message implements IMessage, Serializable, Comparable<Message> {
     ackD = false;
   }
 
+  Message(String s) {
+    msgContents = s;
+  }
+
   public boolean isAckD() {
     return ackD;
   }
@@ -36,10 +40,6 @@ public class Message implements IMessage, Serializable, Comparable<Message> {
 
   public void setSeqNo(short seqNo) {
     this.seqNo = seqNo;
-  }
-
-  public Message(String s) {
-    msgContents = s;
   }
 
   public String getMessageContents() {
