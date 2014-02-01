@@ -4,13 +4,14 @@ import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
+import java.util.TreeSet;
 
 public class RChannel implements ReliableChannel {
   protected static int bufferLength = 32;
   protected static int stringLength = 50000;
 
   protected LinkedList<Message> sendBuffer;
-  protected PriorityQueue<Message> receiveBuffer;
+  protected TreeSet<Message> receiveBuffer;
   protected LinkedList<Message> userBuffer;
 
   private String destinationIP;
@@ -37,7 +38,7 @@ public class RChannel implements ReliableChannel {
       sendBuffer = new LinkedList();
       userBuffer = new LinkedList();
 
-      receiveBuffer = new PriorityQueue<Message>();
+      receiveBuffer = new TreeSet<Message>();
       destinationPort = dPort;
       localPort = lPort;
 

@@ -20,6 +20,7 @@ public class ReliableChannelReceiver implements IReliableChannelReceiver {
 
   public void rreceive1(Message m) {
     String l;
+    Debugger.print(2,"Receive");
     try {
       l = input.readLine();
       if (!l.equals(m.getMessageContents())) {

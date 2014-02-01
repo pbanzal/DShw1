@@ -2,7 +2,10 @@ package edu.purdue.cs505;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.UUID;
 
 public class Main {
   public static void main(String args[]) {
@@ -16,18 +19,18 @@ public class Main {
     RChannel receiverTest = new RChannel(); // Receiver
     receiverTest.init("localhost", 4000, 5000);
     receiverTest.rlisten(rcr);
-    /*
-     * try { PrintWriter outputStream = new PrintWriter(new
-     * FileWriter("random.txt"));
-     * 
-     * for (int i = 0; i < 1024; i++) {
-     * 
-     * String uuid = UUID.randomUUID().toString(); // while (uuid.length() <
-     * 1048576) { // uuid += uuid; // } outputStream.println(uuid);
-     * Debugger.print(2, "one string done"); } outputStream.close();
-     * Debugger.print(2, "file closed"); } catch (IOException e) {
-     * e.printStackTrace(); }
-     */
+    
+     /*try { PrintWriter outputStream = new PrintWriter(new
+      FileWriter("random.txt"));
+      
+      for (int i = 0; i < 1024; i++) {
+      
+      String uuid = UUID.randomUUID().toString(); // while (uuid.length() <
+     // 1048576) { // uuid += uuid; // } outputStream.println(uuid);
+      Debugger.print(2, "one string done"); } outputStream.close();
+      Debugger.print(2, "file closed"); } catch (IOException e) {
+      e.printStackTrace(); }*/
+     
     test2(senderTest, receiverTest);
   }
 
@@ -37,7 +40,9 @@ public class Main {
       String l;
       while ((l = input.readLine()) != null) {
         Message m = new Message(l);
+        Debugger.print(2, m.getMessageContents());
         sender.rsend(m);
+        Debugger.print(2, m.getMessageContents());
         break;
       }
     } catch (IOException e) {
