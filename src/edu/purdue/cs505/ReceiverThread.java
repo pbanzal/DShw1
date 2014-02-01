@@ -86,8 +86,8 @@ class ReceiverThread extends Thread {
             ackFailCount++;
             if (ackFailCount % 100 == 0)
               Debugger.print(2, "ACK fail Count " + ackFailCount);
-            Debugger.print(2, "msgSeqNum: " + msgSeqNum + " MaxSeqNum: "
-                + ((rChannel.getRecvSeqNo() + RChannel.bufferLength)));
+            // Debugger.print(2, "msgSeqNum: " + msgSeqNum + " MaxSeqNum: "
+            // + ((rChannel.getRecvSeqNo() + RChannel.bufferLength)));
             continue;
           } else {
             Debugger.print(

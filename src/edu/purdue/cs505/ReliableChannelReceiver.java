@@ -39,5 +39,11 @@ public class ReliableChannelReceiver implements IReliableChannelReceiver {
       Debugger.print(2, "Expected: " + i + " Got: " + m.getMessageContents());
     }
     i++;
+    if (i % 10000 == 0) {
+      Debugger.print(2, "Received till: " + i);
+    }
+    if (i == 100000) {
+      Debugger.print(2, "All received");
+    }
   }
 }

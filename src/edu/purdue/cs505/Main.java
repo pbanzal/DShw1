@@ -48,7 +48,7 @@ public class Main {
 
   private static void test2(RChannel sender, RChannel receiver) {
     int i = 0;
-    while (i < 1000000) {
+    while (i < 100001) {
       sender.rsend(new Message(new String(Integer.toString(i))));
       i++;
     }
