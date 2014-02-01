@@ -9,9 +9,9 @@ public class RChannel implements ReliableChannel {
   protected static int bufferLength = 32;
   protected static int stringLength = 300;
 
-  protected LinkedList<Message> sendBuffer;
-  protected TreeSet<Message> receiveBuffer;
-  protected LinkedList<Message> userBuffer;
+  protected LinkedList<RMessage> sendBuffer;
+  protected TreeSet<RMessage> receiveBuffer;
+  protected LinkedList<RMessage> userBuffer;
 
   private String destinationIP;
   private int destinationPort;
@@ -21,7 +21,7 @@ public class RChannel implements ReliableChannel {
   private ReceiverThread rThread;
   private SenderThread sThread;
   private DatagramSocket udpChannel;
-  public ReliableChannelReceiver reliableChannelReceiver;
+  public RChannelReceiver reliableChannelReceiver;
 
   public void init(String destinationIP, int dPort) {
     init(destinationIP, dPort, dPort);
@@ -37,7 +37,7 @@ public class RChannel implements ReliableChannel {
       sendBuffer = new LinkedList();
       userBuffer = new LinkedList();
 
-      receiveBuffer = new TreeSet<Message>();
+      receiveBuffer = new TreeSet<RMessage>();
       destinationPort = dPort;
       localPort = lPort;
 
@@ -58,20 +58,21 @@ public class RChannel implements ReliableChannel {
   /*
    * The method breaks the incoming message such that message Content is not
    * more than 65,507 bytes. To be on the safe side, underlying string cannot
-   * contain more than 50,000 bytes
+   * contain more than stringLength bytes
    */
-  public void rsend(Message m) {
+  public void rsend(RMessage m) {
     synchronized (sendBuffer) {
       String stringToSend = m.getMessageContents();
       while (stringToSend.length() > stringLength) {
-        Message msgToSend = new Message(stringToSend.substring(0, stringLength));
+        RMessage msgToSend = new RMessage(stringToSend.substring(0,
+            stringLength));
         msgToSend.setEnd(false);
         if (!send(msgToSend)) {
           continue;
         }
         stringToSend = stringToSend.substring(stringLength);
       }
-      Message msgToSend = new Message(stringToSend);
+      RMessage msgToSend = new RMessage(stringToSend);
       msgToSend.setEnd(true);
       send(msgToSend);
     }
@@ -80,8 +81,8 @@ public class RChannel implements ReliableChannel {
   /*
    * Implement it
    */
-  public void rlisten(IReliableChannelReceiver rc) {
-    reliableChannelReceiver = (ReliableChannelReceiver) rc;
+  public void rlisten(ReliableChannelReceiver rc) {
+    reliableChannelReceiver = (RChannelReceiver) rc;
     // if (!receiveBuffer.isEmpty())
     // rc.rreceive(receiveBuffer.remove(0));
   }
@@ -130,7 +131,7 @@ public class RChannel implements ReliableChannel {
    * Puts the message in the buffer so that sender thread can send the message
    * If message is successfully put, returns true else false
    */
-  private boolean send(Message msgToSend) {
+  private boolean send(RMessage msgToSend) {
     msgToSend.setAck(false);
     msgToSend.setSeqNo(this.sendSeqNo);
     incSendSeq();

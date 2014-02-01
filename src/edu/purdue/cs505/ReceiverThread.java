@@ -40,7 +40,7 @@ class ReceiverThread extends Thread {
         rChannel.getUdpChannel().receive(dgp);
         ByteArrayInputStream bais = new ByteArrayInputStream(dgp.getData());
         ObjectInputStream ois = new ObjectInputStream(bais);
-        Message msgReceived = (Message) ois.readObject();
+        RMessage msgReceived = (RMessage) ois.readObject();
 
         if (msgReceived.isAck()) {
           Debugger.print(
@@ -50,11 +50,11 @@ class ReceiverThread extends Thread {
 
           synchronized (rChannel.sendBuffer) {
             if (!rChannel.sendBuffer.isEmpty()) {
-              Iterator<Message> itr = rChannel.sendBuffer.iterator();
+              Iterator<RMessage> itr = rChannel.sendBuffer.iterator();
               Debugger.print(1, "Iterating for setting ackD");
               for (int sendCount = 0; sendCount < RChannel.bufferLength
                   && itr.hasNext(); sendCount++) {
-                Message m = itr.next();
+                RMessage m = itr.next();
                 Debugger.print(1, m.toString());
                 if (m.getSeqNo() == msgReceived.getSeqNo()) {
                   m.setAckD(true);
@@ -110,7 +110,7 @@ class ReceiverThread extends Thread {
 
             Debugger.print(
                 2,
-                "Gadbad msgSeqNum: " + msgSeqNum + " startSeq: "
+                "Bad msgSeqNum: " + msgSeqNum + " startSeq: "
                     + rChannel.getRecvSeqNo() + " MaxSeqNum: "
                     + ((rChannel.getRecvSeqNo() + RChannel.bufferLength)));
             Debugger.print(2, " " + ackFailCount);
@@ -135,7 +135,7 @@ class ReceiverThread extends Thread {
   /*
    * Send back ACK
    */
-  private void sendACK(Message msgReceived, DatagramPacket dgp) {
+  private void sendACK(RMessage msgReceived, DatagramPacket dgp) {
     byte[] buf = new byte[66000];
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     ObjectOutputStream oos;
@@ -161,14 +161,14 @@ class ReceiverThread extends Thread {
     if (!rChannel.receiveBuffer.isEmpty()) {
 
       // Invoke callback till successive messages are sequential.
-      Iterator<Message> itr = rChannel.receiveBuffer.iterator();
+      Iterator<RMessage> itr = rChannel.receiveBuffer.iterator();
 
       short start = rChannel.getRecvSeqNo();
       short end = (short) ((rChannel.getRecvSeqNo() + RChannel.bufferLength) % Short.MAX_VALUE);
       short expected = rChannel.getRecvSeqNo();
 
       while (itr.hasNext()) {
-        Message msg = itr.next();
+        RMessage msg = itr.next();
         if (expected == msg.getSeqNo()) {
           expected = (short) ((expected + 1) % Short.MAX_VALUE);
           rChannel.incRecvSeq();
@@ -183,12 +183,12 @@ class ReceiverThread extends Thread {
     if (!rChannel.userBuffer.isEmpty()
         && rChannel.reliableChannelReceiver != null) {
       while (!rChannel.userBuffer.isEmpty()) {
-        Message m = rChannel.userBuffer.remove();
+        RMessage m = rChannel.userBuffer.remove();
         Debugger.print(1, "Receiver: Message isEnd: " + m.isEnd());
         if (m.isEnd()) {
           rChannel.reliableChannelReceiver.rreceive(m);
         } else if (!rChannel.userBuffer.isEmpty()) {
-          Message next = rChannel.userBuffer.peek();
+          RMessage next = rChannel.userBuffer.peek();
           String s = next.getMessageContents();
           next.setMessageContents(m.getMessageContents() + s);
           Debugger.print(1, "Receiver: Mergning Length: "

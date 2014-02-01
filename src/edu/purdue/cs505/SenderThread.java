@@ -25,9 +25,9 @@ class SenderThread extends Thread {
         Thread.sleep(10);
         synchronized (rChannel.sendBuffer) {
           if (!rChannel.sendBuffer.isEmpty()) {
-            Iterator<Message> itr = rChannel.sendBuffer.iterator();
+            Iterator<RMessage> itr = rChannel.sendBuffer.iterator();
             while (itr.hasNext()) {
-              Message m = itr.next();
+              RMessage m = itr.next();
               if (m.isAckD()) {
                 itr.remove();
               } else {
@@ -40,7 +40,7 @@ class SenderThread extends Thread {
                 && itr.hasNext(); sendCount++) {
               ByteArrayOutputStream baos = new ByteArrayOutputStream();
               ObjectOutputStream oos = new ObjectOutputStream(baos);
-              Message m = itr.next();
+              RMessage m = itr.next();
               oos.writeObject(m);
 
               byte[] buf = baos.toByteArray();
@@ -73,7 +73,7 @@ class SenderThread extends Thread {
     }
   }
 
-  public void putMsg(Message m) {
+  public void putMsg(RMessage m) {
     rChannel.sendBuffer.add(m);
   }
 

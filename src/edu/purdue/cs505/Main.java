@@ -2,13 +2,16 @@ package edu.purdue.cs505;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.UUID;
 
 public class Main {
   public static void main(String args[]) {
     System.out.println("Hello World2");
 
-    ReliableChannelReceiver rcr = new ReliableChannelReceiver();
+    RChannelReceiver rcr = new RChannelReceiver();
 
     RChannel senderTest = new RChannel(); // Sender
     senderTest.init("localhost", 5000, 4000);
@@ -34,7 +37,7 @@ public class Main {
     // e.printStackTrace();
     // }
     // return;
-    test1(senderTest, receiverTest);
+    test2(senderTest, receiverTest);
   }
 
   private static void test1(RChannel sender, RChannel receiver) {
@@ -42,7 +45,7 @@ public class Main {
       BufferedReader input = new BufferedReader(new FileReader("random.txt"));
       String l;
       while ((l = input.readLine()) != null) {
-        Message m = new Message(l);
+        RMessage m = new RMessage(l);
         sender.rsend(m);
       }
     } catch (IOException e) {
@@ -54,7 +57,7 @@ public class Main {
   private static void test2(RChannel sender, RChannel receiver) {
     int i = 0;
     while (i < 100001) {
-      sender.rsend(new Message(new String(Integer.toString(i))));
+      sender.rsend(new RMessage(new String(Integer.toString(i))));
       i++;
     }
     Debugger.print(2, "All send done!");
