@@ -1,31 +1,37 @@
 package edu.purdue.cs505;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 public class ReliableChannelReceiver implements IReliableChannelReceiver {
   private BufferedReader input;
   private int i;
+  private PrintWriter outputStream;
 
   ReliableChannelReceiver() {
     i = 0;
     try {
       input = new BufferedReader(new FileReader("random.txt"));
-    } catch (FileNotFoundException e) {
+      outputStream = new PrintWriter(new FileWriter("output.txt"));
+    } catch (IOException e) {
       e.printStackTrace();
     }
   }
 
-  public void rreceive1(Message m) {
+  public void rreceive(Message m) {
     String l;
-    Debugger.print(2,"Receive");
     try {
       l = input.readLine();
       if (!l.equals(m.getMessageContents())) {
         Debugger.print(2, "XXXXXXXXXXXXX----NotMatched-----XXXXXXXXXXXX ");
-        // Debugger.print(2, l + " != " + m.getMessageContents());
+        Debugger.print(2, "lenght: " + l.length() + " "
+            + m.getMessageContents().length());
+        outputStream.println(l + "\n != \n" + m.getMessageContents());
+        outputStream.close();
+        Thread.currentThread().stop();
       } else {
         Debugger.print(2, "Matched " + i);
         i++;
@@ -35,7 +41,7 @@ public class ReliableChannelReceiver implements IReliableChannelReceiver {
     }
   }
 
-  public void rreceive(Message m) {
+  public void rreceive1(Message m) {
     if (!m.getMessageContents().equals(Integer.toString(i))) {
       Debugger.print(2, "Expected: " + i + " Got: " + m.getMessageContents());
     }

@@ -1,17 +1,14 @@
 package edu.purdue.cs505;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.DatagramPacket;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.Iterator;
-import java.util.Random;
 
 class ReceiverThread extends Thread {
   private RChannel rChannel;
@@ -84,23 +81,25 @@ class ReceiverThread extends Thread {
             Debugger.print(1,
                 "Msg Recvd: " + msgReceived.toString() + ", from address: "
                     + dgp.getAddress() + ", port: " + dgp.getPort());
-            //Test:Create Congestion - Simulate missing acks.
-//            Random generator = new Random(); 
-//            int i = generator.nextInt(2); //a random number either 0/1.
-//            if(i%2 == 0)
-//            {
-           sendACK(msgReceived, dgp);
-//            }
+            // Test:Create Congestion - Simulate missing acks.
+            // Random generator = new Random();
+            // int i = generator.nextInt(2); //a random number either 0/1.
+            // if(i%2 == 0)
+            // {
+            sendACK(msgReceived, dgp);
+            // }
             invokeCallBack();
-            
+
           }
 
           // Missing ACK - Frame is already received, so just send ack.
           else if (msgSeqNum < start
               || ((msgSeqNum + rChannel.bufferLength) % Short.MAX_VALUE) >= start) {
-            
-            //Debugger.print(2,"Sending ACK msgSeqNum: " + msgSeqNum +"start" + rChannel.getRecvSeqNo() + " MaxSeqNum: "
-            //     + ((rChannel.getRecvSeqNo() + RChannel.bufferLength)%Short.MAX_VALUE));
+
+            // Debugger.print(2,"Sending ACK msgSeqNum: " + msgSeqNum +"start" +
+            // rChannel.getRecvSeqNo() + " MaxSeqNum: "
+            // + ((rChannel.getRecvSeqNo() +
+            // RChannel.bufferLength)%Short.MAX_VALUE));
             sendACK(msgReceived, dgp);
             ackFailCount++;
             // if (ackFailCount % 10000 == 0)
@@ -115,9 +114,8 @@ class ReceiverThread extends Thread {
                     + rChannel.getRecvSeqNo() + " MaxSeqNum: "
                     + ((rChannel.getRecvSeqNo() + RChannel.bufferLength)));
             Debugger.print(2, " " + ackFailCount);
-            
-            
-            //Thread.currentThread().stop();
+
+            // Thread.currentThread().stop();
             // Ignore frames whose seqNum > upper bound of
             // window.
           }
@@ -161,37 +159,44 @@ class ReceiverThread extends Thread {
    */
   private void invokeCallBack() {
     if (!rChannel.receiveBuffer.isEmpty()) {
-      
+
       // Invoke callback till successive messages are sequential.
       Iterator<Message> itr = rChannel.receiveBuffer.iterator();
-      
+
       short start = rChannel.getRecvSeqNo();
       short end = (short) ((rChannel.getRecvSeqNo() + RChannel.bufferLength) % Short.MAX_VALUE);
       short expected = rChannel.getRecvSeqNo();
-      
-      while(itr.hasNext())
-      {
+
+      while (itr.hasNext()) {
         Message msg = itr.next();
-        
-        if(expected == msg.getSeqNo())
-        {
-          expected = (short) ((expected+1)%Short.MAX_VALUE);
+        if (expected == msg.getSeqNo()) {
+          expected = (short) ((expected + 1) % Short.MAX_VALUE);
           rChannel.incRecvSeq();
           itr.remove();
           rChannel.userBuffer.add(msg);
-          }
-        
-        else if(msg.getSeqNo() > expected && start < end)
-        {
+        } else if (msg.getSeqNo() > expected && start < end) {
           break;
         }
       }
     }
-    
+
     if (!rChannel.userBuffer.isEmpty()
         && rChannel.reliableChannelReceiver != null) {
       while (!rChannel.userBuffer.isEmpty()) {
-        rChannel.reliableChannelReceiver.rreceive(rChannel.userBuffer.remove());
+        Message m = rChannel.userBuffer.remove();
+        Debugger.print(1, "Receiver: Message isEnd: " + m.isEnd());
+        if (m.isEnd()) {
+          rChannel.reliableChannelReceiver.rreceive(m);
+        } else if (!rChannel.userBuffer.isEmpty()) {
+          Message next = rChannel.userBuffer.peek();
+          String s = next.getMessageContents();
+          next.setMessageContents(m.getMessageContents() + s);
+          Debugger.print(1, "Receiver: Mergning Length: "
+              + next.getMessageContents().length());
+        } else {
+          rChannel.userBuffer.offerFirst(m);
+          break;
+        }
       }
     }
   }

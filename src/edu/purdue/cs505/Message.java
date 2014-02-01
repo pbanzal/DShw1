@@ -9,6 +9,7 @@ public class Message implements IMessage, Serializable, Comparable<Message> {
   private short seqNo;
   private boolean ackD;
   private int resndCount;
+  private boolean end;
 
   Message() {
     isAck = false;
@@ -62,10 +63,19 @@ public class Message implements IMessage, Serializable, Comparable<Message> {
 
   public String toString() {
     return ("SeqNo: " + seqNo + " " + msgContents + " isAck: " + isAck
-        + " AckD: " + ackD);
+        + " AckD: " + ackD + " isEnd " + end);
+  }
+
+  public boolean isEnd() {
+    return end;
+  }
+
+  public void setEnd(boolean end) {
+    this.end = end;
   }
 
   public int compareTo(Message obj) {
     return Double.compare(this.seqNo, obj.getSeqNo());
   }
+
 }

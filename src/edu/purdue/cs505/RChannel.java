@@ -3,12 +3,11 @@ package edu.purdue.cs505;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.LinkedList;
-import java.util.PriorityQueue;
 import java.util.TreeSet;
 
 public class RChannel implements ReliableChannel {
   protected static int bufferLength = 32;
-  protected static int stringLength = 50000;
+  protected static int stringLength = 300;
 
   protected LinkedList<Message> sendBuffer;
   protected TreeSet<Message> receiveBuffer;
@@ -66,12 +65,15 @@ public class RChannel implements ReliableChannel {
       String stringToSend = m.getMessageContents();
       while (stringToSend.length() > stringLength) {
         Message msgToSend = new Message(stringToSend.substring(0, stringLength));
+        msgToSend.setEnd(false);
         if (!send(msgToSend)) {
           continue;
         }
         stringToSend = stringToSend.substring(stringLength);
       }
-      send(new Message(stringToSend));
+      Message msgToSend = new Message(stringToSend);
+      msgToSend.setEnd(true);
+      send(msgToSend);
     }
   }
 
