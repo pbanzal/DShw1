@@ -82,31 +82,31 @@ class ReceiverThread extends Thread {
                 "Msg Recvd: " + msgReceived.toString() + ", from address: "
                     + dgp.getAddress() + ", port: " + dgp.getPort());
             sendACK(msgReceived, dgp);
+            invokeCallBack();
           }
 
           // Missing ACK - Frame is already received, so just send ack.
-          else if (msgSeqNum < rChannel.getRecvSeqNo()) {
+          else if (msgSeqNum < start
+              || ((msgSeqNum + rChannel.bufferLength) % Short.MAX_VALUE) >= start) {
             sendACK(msgReceived, dgp);
             ackFailCount++;
-            if (ackFailCount % 100 == 0)
-              Debugger.print(2, "ACK fail Count " + ackFailCount);
+            // if (ackFailCount % 10000 == 0)
+            // Debugger.print(2, "ACK fail Count " + ackFailCount);
             // Debugger.print(2, "msgSeqNum: " + msgSeqNum + " MaxSeqNum: "
             // + ((rChannel.getRecvSeqNo() + RChannel.bufferLength)));
-            continue;
           } else {
+
             Debugger.print(
                 2,
                 "Gadbad msgSeqNum: " + msgSeqNum + " startSeq: "
                     + rChannel.getRecvSeqNo() + " MaxSeqNum: "
                     + ((rChannel.getRecvSeqNo() + RChannel.bufferLength)));
             Debugger.print(2, " " + ackFailCount);
-            Thread.currentThread().stop();
+            // Thread.currentThread().stop();
             // Ignore frames whose seqNum > upper bound of
             // window.
-            continue;
           }
         }
-        invokeCallBack();
       } catch (SocketTimeoutException e) {
         invokeCallBack();
       } catch (SocketException e) {
@@ -156,8 +156,9 @@ class ReceiverThread extends Thread {
           rChannel.incRecvSeq();
           itr.remove();
           rChannel.userBuffer.add(msg);
+        } else if (msg.getSeqNo() < expected) {
+          itr.remove();
         } else {
-
           break;
         }
       }

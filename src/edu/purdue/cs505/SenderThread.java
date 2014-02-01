@@ -36,6 +36,8 @@ class SenderThread extends Thread {
             }
 
             itr = rChannel.sendBuffer.iterator();
+            int temp = rChannel.sendBuffer.peek().getSeqNo();
+            // Debugger.print(2, "Sending: " + temp + " to: " + (temp + 31));
             for (int sendCount = 0; sendCount < RChannel.bufferLength
                 && itr.hasNext(); sendCount++) {
               ByteArrayOutputStream baos = new ByteArrayOutputStream();
