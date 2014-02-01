@@ -8,14 +8,24 @@ public class Message implements IMessage, Serializable, Comparable<Message> {
   private boolean isAck;
   private short seqNo;
   private boolean ackD;
+  private int resndCount;
 
   Message() {
     isAck = false;
     ackD = false;
+    resndCount = 0;
   }
 
   Message(String s) {
     msgContents = s;
+  }
+
+  public int getResndCount() {
+    return resndCount;
+  }
+
+  public void incResndCount() {
+    this.resndCount++;
   }
 
   public boolean isAckD() {
