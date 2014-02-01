@@ -86,12 +86,17 @@ class ReceiverThread extends Thread {
             ackFailCount++;
             if (ackFailCount % 100 == 0)
               Debugger.print(2, "ACK fail Count " + ackFailCount);
+            Debugger.print(2, "msgSeqNum: " + msgSeqNum + " MaxSeqNum: "
+                + ((rChannel.getRecvSeqNo() + RChannel.bufferLength)));
+            continue;
           } else {
-            Debugger.print(2, "Gadbad msgSeqNum: " + msgSeqNum + " MaxSeqNum: "
+            Debugger.print(2, "Gadbad msgSeqNum: " + msgSeqNum + " startSeq: " + rChannel.getRecvSeqNo() + " MaxSeqNum: "
                 + ((rChannel.getRecvSeqNo() + RChannel.bufferLength)));
             Debugger.print(2, " " + ackFailCount);
+            Thread.currentThread().stop();
             // Ignore frames whose seqNum > upper bound of
             // window.
+            continue;
           }
         }
         invokeCallBack();
@@ -147,7 +152,7 @@ class ReceiverThread extends Thread {
             rChannel.reliableChannelReceiver.rreceive(msg);
           }
         } else {
-          rChannel.setRecvSeqNo(expected);
+          //rChannel.setRecvSeqNo(expected);
           break;
         }
       }

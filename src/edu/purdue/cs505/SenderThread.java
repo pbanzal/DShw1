@@ -22,7 +22,7 @@ class SenderThread extends Thread {
   public void run() {
     try {
       while (true) {
-        Thread.sleep(1);
+        Thread.sleep(8);
         synchronized (rChannel.sendBuffer) {
           if (!rChannel.sendBuffer.isEmpty()) {
             Iterator<Message> itr = rChannel.sendBuffer.iterator();
@@ -36,6 +36,7 @@ class SenderThread extends Thread {
             }
 
             itr = rChannel.sendBuffer.iterator();
+            // Debugger.print(2, "Sending from: " + rChannel.sendBuffer.peek().getSeqNo() + " till " + (rChannel.sendBuffer.peek().getSeqNo() + 31));
             for (int sendCount = 0; sendCount < RChannel.bufferLength
                 && itr.hasNext(); sendCount++) {
               ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -49,6 +50,7 @@ class SenderThread extends Thread {
                   rChannel.getDestinationPort());
               Debugger.print(1, "UDP Send " + m.toString());
               rChannel.getUdpChannel().send(out);
+              m.incResndCount();
             }
           } else {
             Debugger.print(1, "Nothing to send");
