@@ -2,15 +2,16 @@ package edu.purdue.cs505;
 
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.util.LinkedList;
 import java.util.PriorityQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class RChannel implements ReliableChannel {
   protected static int bufferLength = 32;
   protected static int stringLength = 50000;
 
-  protected LinkedBlockingQueue<Message> sendBuffer;
+  protected LinkedList<Message> sendBuffer;
   protected PriorityQueue<Message> receiveBuffer;
+  protected LinkedList<Message> userBuffer;
 
   private String destinationIP;
   private int destinationPort;
@@ -33,7 +34,8 @@ public class RChannel implements ReliableChannel {
    */
   public void init(String destinationIP, int dPort, int lPort) {
     try {
-      sendBuffer = new LinkedBlockingQueue();
+      sendBuffer = new LinkedList();
+      userBuffer = new LinkedList();
 
       receiveBuffer = new PriorityQueue<Message>();
       destinationPort = dPort;
@@ -129,13 +131,8 @@ public class RChannel implements ReliableChannel {
     msgToSend.setAck(false);
     msgToSend.setSeqNo(this.sendSeqNo);
     incSendSeq();
-    try {
-      synchronized (sendBuffer) {
-        sendBuffer.put(msgToSend);
-      }
-    } catch (InterruptedException e) {
-      Debugger.print(1, e.getMessage());
-      return false;
+    synchronized (sendBuffer) {
+      sendBuffer.add(msgToSend);
     }
     Debugger.print(1, "Adding to Send Buffer " + msgToSend.toString());
     return true;

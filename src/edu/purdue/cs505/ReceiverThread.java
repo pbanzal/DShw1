@@ -142,14 +142,19 @@ class ReceiverThread extends Thread {
         if (expected == msg.getSeqNo()) {
           expected++;
           rChannel.incRecvSeq();
-          if (rChannel.reliableChannelReceiver != null) {
-            itr.remove();
-            rChannel.reliableChannelReceiver.rreceive(msg);
-          }
+          itr.remove();
+          rChannel.userBuffer.add(msg);
         } else {
-          rChannel.setRecvSeqNo(expected);
+          // rChannel.setRecvSeqNo(expected);
           break;
         }
+      }
+    }
+
+    if (!rChannel.userBuffer.isEmpty()
+        && rChannel.reliableChannelReceiver != null) {
+      while (!rChannel.userBuffer.isEmpty()) {
+        rChannel.reliableChannelReceiver.rreceive(rChannel.userBuffer.remove());
       }
     }
   }
