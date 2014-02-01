@@ -69,8 +69,12 @@ class ReceiverThread extends Thread {
         else {
           int msgSeqNum = msgReceived.getSeqNo();
           // Frame is as expected, within receiver window size limits.
-          if (rChannel.getRecvSeqNo() <= msgSeqNum
-              && msgSeqNum < rChannel.getRecvSeqNo() + RChannel.bufferLength) {
+          int start = rChannel.getRecvSeqNo();
+          int end = start + RChannel.bufferLength;
+          end %= Short.MAX_VALUE;
+          if ((start <= msgSeqNum && msgSeqNum < end)
+              || (start > end && msgSeqNum >= start && msgSeqNum > end)
+              || (start > end && msgSeqNum < start && msgSeqNum < end)) {
             synchronized (rChannel.receiveBuffer) {
               rChannel.receiveBuffer.add(msgReceived);
             }
