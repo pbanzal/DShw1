@@ -1,0 +1,77 @@
+\documentclass[preprint]{llncs}
+
+\usepackage{ifpdf}
+\usepackage{graphicx}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{listings}
+\usepackage{subcaption}
+\usepackage{stmaryrd}
+
+\ifpdf
+  \usepackage{hyperref}
+  \usepackage{graphicx}
+\else
+  \usepackage[dvips]{graphicx}
+  \usepackage[dvips]{hyperref}
+\fi
+
+\newcounter{copyrightbox}
+
+
+\lstset{ %
+language=Java, % choose the language of the code
+basicstyle=\scriptsize\ttfamily,       % the size of the fonts that are used for the code
+keywordstyle=\color{Bittersweet},
+% numbers=left,                   % where to put the line-numbers
+numberstyle=\tiny,      % the size of the fonts that are used for the line-numbers
+stepnumber=1,                   % the step between two line-numbers. If it is 1 each line will be numbered
+numbersep=5pt,                  % how far the line-numbers are from the code
+backgroundcolor=\color{white},  % choose the background color. You must add \usepackage{color}
+showspaces=false,               % show spaces adding particular underscores
+showstringspaces=false,         % underline spaces within strings
+showtabs=false,                 % show tabs within strings adding particular underscores
+% frame=single,                   % adds a frame around the code
+tabsize=2,                      % sets default tabsize to 2 spaces
+captionpos=b,                   % sets the caption-position to bottom
+breaklines=true,                % sets automatic line breaking
+breakatwhitespace=false,        % sets if automatic breaks should only happen at whitespace
+commentstyle=\itshape\color{MidnightBlue},
+%escapeinside={\%*}{*)},         % if you want to add a comment within your code
+}
+% Formatting commands
+% -------------------
+\newcommand{\code}[1]{\,{\tt #1}\,}
+
+\begin{document}
+
+\title{Reliable Communication Channel over UDP}
+
+\author{Praseem Banzal \hspace*{.25in} Suvidha Kancharla
+\hspace*{.25in} Gowtham Kaki}
+\institute{Purdue University\\ {\tt \{pbanzal,skancher,gkaki\}@cs.purdue.edu}}
+
+\maketitle
+
+\begin{abstract}
+
+We describe the architecture and working details of reliable and FIFO
+network communication channel build over unreliable UDP protocol. This
+work is done towards fulfilling the requirements of cs505 Distributed
+Systems course work.
+\end{abstract}
+
+
+\input{architecture}
+
+\input{implementation}
+
+\input{testcases}
+
+
+% {
+% \small
+% \bibliographystyle{plain} \small \bibliography{shape}
+% }
+
+\end{document}
+

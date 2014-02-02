@@ -1,0 +1,41 @@
+\section{Implementation}
+\label{sec:impl}
+
+\code{RChannel} class implements the interface \code{ReliableChannel}.
+The constructor of the class accepts local port, destination port and
+destination IP, and opens a UDP socket on the local port. Sender and
+receiver components manifest as separate threads of execution
+implemented by \code{SenderThread} and \code{ReceiverThread} classes
+respectively. Since channel has to continue accepting messages from
+the user it continues executing the main thread. To dispatch
+user messages to sender thread, the channel thread uses a
+\code{sendBuffer} linked list that is shared between both the threads.
+Java construct \code{synchronize} was used to control the exclusive
+access to the buffer. 
+
+The size of payload in each message fragment is restricted to a fixed
+number, which is 600 unicode characters, or 1200 bytes. Apart from the
+payload, the message also contains its sequence number, and flags to
+denote if it is an acknowledgement, or if it is contains the final
+fragment of a message. The message is implemented by \code{RMessage}
+class, which also implements \code{Serializable} class, so as to
+enable conversion to byte stream. 
+
+The \code{ReceiverThread} maintains expected sequence number through
+\code{RChannel} class, which denotes the starting sequence number
+(left-most hole) of the \emph{sliding window}. When a datagram with
+expected sequence number arrives, the expected number is incremented
+denoting the sliding of the window. \code{bufferLength}
+variable denotes the size of the sliding window. Any datagram that
+falls in the sliding window is acknowledged by sending an
+\code{RMessage} with same sequence number as the datagram, but with
+ACK flag set.
+
+Since ACK itself is a message, the \code{ReceiverThread} on sender
+side is also responsible to convey acknowledgements to sender thread.
+It does so by marking corresponding messages in \code{sendBuffer} with
+ACK flag. Therefore, \code{sendBuffer} is also shared with
+\code{ReceiverThread}.
+
+Once the message is reconstructed by \code{ReceiverThread}, it calls
+the callback to convey the message to the listener.

@@ -7,7 +7,8 @@ import java.util.TreeSet;
 
 public class RChannel implements ReliableChannel {
   protected static int bufferLength = 32;
-  protected static int stringLength = 300;
+  protected static int stringLength = 600;
+  protected static int timeout = 10;
 
   protected LinkedList<RMessage> sendBuffer;
   protected TreeSet<RMessage> receiveBuffer;
@@ -34,8 +35,8 @@ public class RChannel implements ReliableChannel {
    */
   public void init(String destinationIP, int dPort, int lPort) {
     try {
-      sendBuffer = new LinkedList();
-      userBuffer = new LinkedList();
+      sendBuffer = new LinkedList<RMessage>();
+      userBuffer = new LinkedList<RMessage>();
 
       receiveBuffer = new TreeSet<RMessage>();
       destinationPort = dPort;

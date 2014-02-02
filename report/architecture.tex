@@ -1,0 +1,37 @@
+\section{Architecture}
+\label{sec:arch}
+
+A reliable communications channel is duplex by nature. At the
+high-level, the channel is composed of two components - sender and
+receiver. The sender component accepts a message, which is a string of
+arbitrary length, converts the message to byte stream followed by
+fragmentation into UDP datagrams before sending. The sender requires
+acknowledgement (ACK) from receiever acknowledging the receipt of
+every datagram. In order to match acknowldgements with datagrams,
+every datagram is assigned a unique identifier. To facilitate FIFO
+order at the receiver, unique identifiers are assigned sequentially,
+hence they are sequence numbers.
+
+Sender maintains an \emph{UNACK\_SET} of datagrams that are yet to be
+acknowledged by the receiver. Considering that network bandwidth and
+memory at receiver are both finite resources, the size of
+\emph{UNACK\_SET} is bound. If the bound is reached, sender goes to
+sleep. It periodically wakes up to see if any datagrams in
+\emph{UNACK\_SET} are acknowledged. If there are any such datagrams, it
+removes them from the set, resends the rest, and fills the gap by
+sending fresh datagrams, if there are any. Sender repeats this till
+there are no more datagrams to send.
+
+The task of the receiver component of the channel is to receive and
+reconstruct the message sent by sender. Since message is fragmented,
+and fragments have sequence numbers, receiver maintains a
+\emph{sliding window} of \emph{holes} denoting consecutive sequence numbers
+of fragments that it is expecting. If a new datagram with sequence
+number in the expected range (i.e., current window) arrives, it is
+acknowledged and corresponding \emph{hole} is filled. If the sequence
+number is lowest of the expected range, the bounds of the range are
+incremented by one (i.e., window slides to right). If the arrived
+fragment is the last of the fragments of a message, a flag is set to
+denote the same. Once such fragment arrives, given that all holes
+corresponding to previous fragments are filled, the message is
+reconstructed and handed over to the listener.

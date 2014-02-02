@@ -22,7 +22,7 @@ class SenderThread extends Thread {
   public void run() {
     try {
       while (true) {
-        Thread.sleep(10);
+        Thread.sleep(RChannel.timeout);
         synchronized (rChannel.sendBuffer) {
           if (!rChannel.sendBuffer.isEmpty()) {
             Iterator<RMessage> itr = rChannel.sendBuffer.iterator();

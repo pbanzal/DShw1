@@ -22,7 +22,7 @@ class ReceiverThread extends Thread {
    */
   public void run() {
     int ackFailCount = 0;
-    byte[] buf = new byte[66000];
+    byte[] buf = new byte[2000];
     DatagramPacket dgp = new DatagramPacket(buf, buf.length);
 
     /*
@@ -149,8 +149,9 @@ class ReceiverThread extends Thread {
   }
 
   /*
-   * Sorts the received packets in FIFO order and invokes callback for each
-   * message.
+   * Sorts the received packets in FIFO order.
+   * Reconstructs message from contents of datagrams, and 
+   * invokes call back when a message is completely constructed. 
    */
   private void invokeCallBack() {
     if (!rChannel.receiveBuffer.isEmpty()) {
@@ -186,7 +187,7 @@ class ReceiverThread extends Thread {
           RMessage next = rChannel.userBuffer.peek();
           String s = next.getMessageContents();
           next.setMessageContents(m.getMessageContents() + s);
-          Debugger.print(1, "Receiver: Mergning Length: "
+          Debugger.print(1, "Receiver: Merging Length: "
               + next.getMessageContents().length());
         } else {
           rChannel.userBuffer.offerFirst(m);
