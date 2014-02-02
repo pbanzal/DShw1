@@ -40,11 +40,11 @@ srcdir = ./edu/purdue/cs505/
 
 CLASSES = \
 					$(srcdir)Debugger.java \
-					$(srcdir)IMessage.java \
 					$(srcdir)Message.java \
+					$(srcdir)RMessage.java \
 					$(srcdir)ReceiverThread.java \
+					$(srcdir)RChannelReceiver.java \
 					$(srcdir)ReliableChannelReceiver.java \
-					$(srcdir)IReliableChannelReceiver.java \
 					$(srcdir)ReliableChannel.java \
 					$(srcdir)SenderThread.java \
 					$(srcdir)RChannel.java \

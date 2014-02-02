@@ -45,7 +45,7 @@ class SenderThread extends Thread {
 
               byte[] buf = baos.toByteArray();
               DatagramPacket out = new DatagramPacket(buf, buf.length,
-                  InetAddress.getByName("localhost"),
+                  InetAddress.getByName(rChannel.getDestinationIP()),
                   rChannel.getDestinationPort());
               Debugger.print(1, "UDP Send " + m.toString());
               // Test:Create Congestion - Simulate missing frames.

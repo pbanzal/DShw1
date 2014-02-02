@@ -28,7 +28,8 @@ and fragments have sequence numbers, receiver maintains a
 \emph{sliding window} of \emph{holes} denoting consecutive sequence numbers
 of fragments that it is expecting. If a new datagram with sequence
 number in the expected range (i.e., current window) arrives, it is
-acknowledged and corresponding \emph{hole} is filled. If the sequence
+acknowledged and corresponding \emph{hole} is filled. If a datagram with sequence number less
+than expected range of the current window arrives, it means the sender has resent a frame, either because it woke up earlier than ack reached it/ack was lost. In this case, we resend ack for that fragment. If the sequence
 number is lowest of the expected range, the bounds of the range are
 incremented by one (i.e., window slides to right). If the arrived
 fragment is the last of the fragments of a message, a flag is set to

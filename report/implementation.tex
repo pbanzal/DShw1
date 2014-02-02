@@ -39,3 +39,15 @@ ACK flag. Therefore, \code{sendBuffer} is also shared with
 
 Once the message is reconstructed by \code{ReceiverThread}, it calls
 the callback to convey the message to the listener.
+
+
+\section{Improving Throughput}
+\label{sec:efficiency}
+To improve througput, the sender does not wait for ack of each packet. To utilise the connection more effectively than idle waiting, sender does not stop sending until a window size packets are sent. Assuming, RTT = 10ms, it waits for 10ms before sending unack packets/fresh packets.
+Even on the receiver side, we have a window size greater than 1, allowing out of order packets to be received. Arranging them in order is taken care by the receiver before its being sent to the higher level layers.
+
+
+\section{Test}
+\label{sec:test}
+
+cd src; make clean; make; java edu/purdue/cs505/Main

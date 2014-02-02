@@ -8,21 +8,22 @@ import java.io.PrintWriter;
 
 public class RChannelReceiver implements ReliableChannelReceiver {
   private BufferedReader input;
-  private int i;
+  private int i=0;
   private PrintWriter outputStream;
 
   RChannelReceiver() {
-    i = 0;
+   
+  }
+
+  public void rreceive1(RMessage m) {
+    String l;
+    
     try {
       input = new BufferedReader(new FileReader("random.txt"));
       outputStream = new PrintWriter(new FileWriter("output.txt"));
     } catch (IOException e) {
       e.printStackTrace();
     }
-  }
-
-  public void rreceive(RMessage m) {
-    String l;
     try {
       l = input.readLine();
       if (!l.equals(m.getMessageContents())) {
@@ -41,7 +42,7 @@ public class RChannelReceiver implements ReliableChannelReceiver {
     }
   }
 
-  public void rreceive1(RMessage m) {
+  public void rreceive(RMessage m) {
     if (!m.getMessageContents().equals(Integer.toString(i))) {
       Debugger.print(2, "Expected: " + i + " Got: " + m.getMessageContents());
     }

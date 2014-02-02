@@ -34,7 +34,7 @@ public class Main {
 //    	 e.printStackTrace();
 //     }
      //return;
-    test1(senderTest, receiverTest);
+    test2(senderTest, receiverTest);
   }
 
   private static void test1(RChannel sender, RChannel receiver) {
