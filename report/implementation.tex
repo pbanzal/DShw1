@@ -18,7 +18,7 @@ number, which is 600 unicode characters, or 1200 bytes. Apart from the
 payload, the message also contains its sequence number, and flags to
 denote if it is an acknowledgement, or if it is contains the final
 fragment of a message. The message is implemented by \code{RMessage}
-class, which also implements \code{Serializable} class, so as to
+class, which also implements \code{Serializable} interface, so as to
 enable conversion to byte stream. 
 
 The \code{ReceiverThread} maintains expected sequence number through
