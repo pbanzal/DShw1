@@ -20,24 +20,21 @@ public class Main {
     receiverTest.init("localhost", 4000, 5000);
     receiverTest.rlisten(rcr);
 
-    // try {
-    // PrintWriter outputStream = new PrintWriter(new FileWriter("random.txt"));
-    // for (int i = 0; i < 1024; i++) {
-    //
-    // String uuid = UUID.randomUUID().toString();
-    // while (uuid.length() < 10000) {
-    // uuid += uuid;
-    // }
-    // outputStream.println(uuid);
-    // Debugger.print(2, "one string done");
-    // }
-    // outputStream.close();
-    // Debugger.print(2, "file closed");
-    // } catch (IOException e) {
-    // e.printStackTrace();
-    // }
-    // return;
-    test2(senderTest, receiverTest);
+//     try {
+//	     PrintWriter outputStream = new PrintWriter(new FileWriter("random.txt"));
+//	     for (int i = 0; i < 1024; i++) {
+//	    	 String uuid = UUID.randomUUID().toString();
+//	    	 while (uuid.length() < 10000) {
+//	    		 uuid += uuid;
+//	    	 }
+//	    	 outputStream.println(uuid);
+//	     }
+//	     outputStream.close();
+//     } catch (IOException e) {
+//    	 e.printStackTrace();
+//     }
+     //return;
+    test1(senderTest, receiverTest);
   }
 
   private static void test1(RChannel sender, RChannel receiver) {

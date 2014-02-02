@@ -74,7 +74,7 @@ class ReceiverThread extends Thread {
           end %= Short.MAX_VALUE;
           if ((start <= msgSeqNum && msgSeqNum < end)
               || (start > end && msgSeqNum >= start && msgSeqNum > end)
-              || (start > end && msgSeqNum <= start && msgSeqNum < end)) {
+              || (start > end && msgSeqNum < end)) {
             synchronized (rChannel.receiveBuffer) {
               rChannel.receiveBuffer.add(msgReceived);
             }
@@ -95,19 +95,10 @@ class ReceiverThread extends Thread {
           // Missing ACK - Frame is already received, so just send ack.
           else if (msgSeqNum < start
               || ((msgSeqNum + rChannel.bufferLength) % Short.MAX_VALUE) >= start) {
-
-            // Debugger.print(2,"Sending ACK msgSeqNum: " + msgSeqNum +"start" +
-            // rChannel.getRecvSeqNo() + " MaxSeqNum: "
-            // + ((rChannel.getRecvSeqNo() +
-            // RChannel.bufferLength)%Short.MAX_VALUE));
             sendACK(msgReceived, dgp);
             ackFailCount++;
-            // if (ackFailCount % 10000 == 0)
-            // Debugger.print(2, "ACK fail Count " + ackFailCount);
-            // Debugger.print(2, "msgSeqNum: " + msgSeqNum + " MaxSeqNum: "
-            // + ((rChannel.getRecvSeqNo() + RChannel.bufferLength)));
-          } else {
-
+          } 
+          else {
             Debugger.print(
                 2,
                 "Bad msgSeqNum: " + msgSeqNum + " startSeq: "
@@ -136,13 +127,17 @@ class ReceiverThread extends Thread {
    * Send back ACK
    */
   private void sendACK(RMessage msgReceived, DatagramPacket dgp) {
-    byte[] buf = new byte[66000];
+	String content;
+    byte[] buf; //= new byte[66000];
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     ObjectOutputStream oos;
     try {
       oos = new ObjectOutputStream(baos);
+      content = msgReceived.getMessageContents(); 
+      msgReceived.setMessageContents("");
       msgReceived.setAck(true);
       oos.writeObject(msgReceived);
+      msgReceived.setMessageContents(content);
       buf = baos.toByteArray();
       DatagramPacket out = new DatagramPacket(buf, buf.length,
           dgp.getAddress(), dgp.getPort());

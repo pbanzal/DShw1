@@ -29,7 +29,7 @@ public class RChannel implements ReliableChannel {
   }
 
   /*
-   * Initilaize the channel. Creates a socket and starts the sender and receiver
+   * Initialize the channel. Creates a socket and starts the sender and receiver
    * thread.
    */
   public void init(String destinationIP, int dPort, int lPort) {
@@ -61,21 +61,19 @@ public class RChannel implements ReliableChannel {
    * contain more than stringLength bytes
    */
   public void rsend(RMessage m) {
-    synchronized (sendBuffer) {
-      String stringToSend = m.getMessageContents();
-      while (stringToSend.length() > stringLength) {
-        RMessage msgToSend = new RMessage(stringToSend.substring(0,
-            stringLength));
-        msgToSend.setEnd(false);
-        if (!send(msgToSend)) {
-          continue;
-        }
-        stringToSend = stringToSend.substring(stringLength);
-      }
-      RMessage msgToSend = new RMessage(stringToSend);
-      msgToSend.setEnd(true);
-      send(msgToSend);
-    }
+	  String stringToSend = m.getMessageContents();
+	  while (stringToSend.length() > stringLength) {
+	    RMessage msgToSend = new RMessage(stringToSend.substring(0,
+	        stringLength));
+	    msgToSend.setEnd(false);
+	    if (!send(msgToSend)) {
+	      continue;
+	    }
+	    stringToSend = stringToSend.substring(stringLength);
+	  }
+	  RMessage msgToSend = new RMessage(stringToSend);
+	  msgToSend.setEnd(true);
+	  send(msgToSend);
   }
 
   /*

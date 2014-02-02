@@ -21,7 +21,7 @@ public class RChannelReceiver implements ReliableChannelReceiver {
     }
   }
 
-  public void rreceive1(RMessage m) {
+  public void rreceive(RMessage m) {
     String l;
     try {
       l = input.readLine();
@@ -41,7 +41,7 @@ public class RChannelReceiver implements ReliableChannelReceiver {
     }
   }
 
-  public void rreceive(RMessage m) {
+  public void rreceive1(RMessage m) {
     if (!m.getMessageContents().equals(Integer.toString(i))) {
       Debugger.print(2, "Expected: " + i + " Got: " + m.getMessageContents());
     }
